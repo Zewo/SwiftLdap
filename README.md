@@ -11,12 +11,12 @@ Implemented:
 ```swift
 let l = try Ldap("ldap://griffin.domain.com:389")
 
-try l.set_option(.Timeout, value: 3)
-try l.set_option(.NetworkTimeout, value: 2)
-try l.set_option(.ProtocolVersion, value: 3)
-try l.set_option(.Referrals, value: 0)
+try l.setOption(.Timeout, value: 3)
+try l.setOption(.NetworkTimeout, value: 2)
+try l.setOption(.ProtocolVersion, value: 3)
+try l.setOption(.Referrals, value: 0)
 
-print(try l.simple_bind_s("user2@domain.com", passwd: "user2"))
+print(try l.simpleBindSync("user2@domain.com", password: "user2"))
 ```
 
 Waiting for PRs

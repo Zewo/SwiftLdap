@@ -13,34 +13,30 @@ public enum Errors:ErrorType {
 public class Ldap {
     var ld: COpaquePointer? = nil
     public init(_ uri: String) throws {
-        var ldp = COpaquePointer()
-        let status = ldap_initialize(&ldp, uri)
+        var ld = COpaquePointer()
+        let status = ldap_initialize(&ld, uri)
         if let error = ApiErrorCode(status: status) {
             throw Errors.InitializeError(code: error)
         }
-        ld = ldp
+        self.ld = ld
     }
-    public func set_option<T>(optType: OptionType, value: T) throws {
+    public func setOption<T>(optionType: OptionType, value: T) throws {
         var value = value
-        let status = ldap_set_option(ld!, optType.rawValue, &value)
+        let status = ldap_set_option(ld!, optionType.rawValue, &value)
         guard status==LDAP_OPT_SUCCESS else {
             throw Errors.SetOptionError
         }
     }
-    public func get_option<T>(optType: OptionType, allocBytes: Int=1) throws -> T {
-        let resultP = UnsafeMutablePointer<Void>.alloc(allocBytes)
-        let status = ldap_get_option(ld!, optType.rawValue, resultP)
+    public func getOption<T>(optionType: OptionType, bytesToAlloc: Int=1) throws -> T {
+        let resultP = UnsafeMutablePointer<Void>.alloc(bytesToAlloc)
+        let status = ldap_get_option(ld!, optionType.rawValue, resultP)
         guard status==LDAP_OPT_SUCCESS else {
             throw Errors.GetOptionError
         }
-        let r = UnsafeMutablePointer<T>(resultP)
-        let value: T = r.memory
-        resultP.dealloc(allocBytes)
+        let value: T = UnsafeMutablePointer<T>(resultP).memory
+        resultP.dealloc(bytesToAlloc)
         resultP.destroy()
         return value
-    }
-    public func search_s(){
-        
     }
     deinit {
         unbind()
@@ -50,10 +46,9 @@ public class Ldap {
             return
         }
         let status = ldap_unbind(ld)
-        print(status)
     }
-    public func simple_bind_s(who: String, passwd: String = "") throws -> ResultCode {
-        let result = ldap_simple_bind_s(ld!, who, passwd)
+    public func simpleBindSync(who: String, password: String = "") throws -> ResultCode {
+        let result = ldap_simple_bind_s(ld!, who, password)
         if let error = ApiErrorCode(status: result) {
             throw Errors.BindError(code: error)
         }
