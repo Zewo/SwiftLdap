@@ -4,30 +4,32 @@ import ldap
 
 
 public enum Errors:ErrorType {
-    case SetOptionError, GetOptionError, BindError(code: ApiErrorCode)
+    case SetOptionError, GetOptionError, BindError(code: ApiErrorCode),
+    InitializeError(code: ApiErrorCode), NotInitialized
 }
 
 
 
 public class Ldap {
-    var ld: COpaquePointer = COpaquePointer()
-    
+    var ld: COpaquePointer? = nil
     public init(_ uri: String) throws {
-        let status = ldap_initialize(&ld, uri)
+        var ldp = COpaquePointer()
+        let status = ldap_initialize(&ldp, uri)
         if let error = ApiErrorCode(status: status) {
-            throw error
+            throw Errors.InitializeError(code: error)
         }
+        ld = ldp
     }
     public func set_option<T>(optType: OptionType, value: T) throws {
         var value = value
-        let status = ldap_set_option(ld, optType.rawValue, &value)
+        let status = ldap_set_option(ld!, optType.rawValue, &value)
         guard status==LDAP_OPT_SUCCESS else {
             throw Errors.SetOptionError
         }
     }
     public func get_option<T>(optType: OptionType, allocBytes: Int=1) throws -> T {
         let resultP = UnsafeMutablePointer<Void>.alloc(allocBytes)
-        let status = ldap_get_option(ld, optType.rawValue, resultP)
+        let status = ldap_get_option(ld!, optType.rawValue, resultP)
         guard status==LDAP_OPT_SUCCESS else {
             throw Errors.GetOptionError
         }
@@ -44,11 +46,14 @@ public class Ldap {
         unbind()
     }
     private func unbind() {
+        guard let ld = ld else {
+            return
+        }
         let status = ldap_unbind(ld)
         print(status)
     }
     public func simple_bind_s(who: String, passwd: String = "") throws -> ResultCode {
-        let result = ldap_simple_bind_s(ld, who, passwd)
+        let result = ldap_simple_bind_s(ld!, who, passwd)
         if let error = ApiErrorCode(status: result) {
             throw Errors.BindError(code: error)
         }
