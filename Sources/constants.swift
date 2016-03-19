@@ -103,7 +103,7 @@ public enum ResultCode {
 
 
 
-public enum ApiErrorCode: ErrorType {
+public enum ApiErrorCode: ErrorProtocol {
     case ServerDown, LocalError, EncodingError, DecodingError, Timeout, AuthUnknown, FilterError, UserCancelled, ParamError, NoMemory, ConnectError, NotSupported, ControlNotFound, NoResultsReturned, MoreResultsToReturn, ClientLoop, ReferralLimitExceeded, XConnecting
     init?(status: Int32) {
         switch status {

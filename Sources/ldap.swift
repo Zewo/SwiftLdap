@@ -3,7 +3,7 @@ import ldap
 
 
 
-public enum Errors:ErrorType {
+public enum Errors:ErrorProtocol {
     case SetOptionError, GetOptionError, BindError(code: ApiErrorCode),
     InitializeError(code: ApiErrorCode), NotInitialized
 }
@@ -11,9 +11,9 @@ public enum Errors:ErrorType {
 
 
 public class Ldap {
-    var ld: COpaquePointer? = nil
+    var ld: OpaquePointer? = nil
     public init(_ uri: String) throws {
-        var ld = COpaquePointer()
+        var ld : OpaquePointer = nil
         let status = ldap_initialize(&ld, uri)
         if let error = ApiErrorCode(status: status) {
             throw Errors.InitializeError(code: error)
@@ -28,14 +28,14 @@ public class Ldap {
         }
     }
     public func getOption<T>(optionType: OptionType, bytesToAlloc: Int=1) throws -> T {
-        let resultP = UnsafeMutablePointer<Void>.alloc(bytesToAlloc)
+        let resultP = UnsafeMutablePointer<Void>(allocatingCapacity: bytesToAlloc)
         let status = ldap_get_option(ld!, optionType.rawValue, resultP)
         guard status==LDAP_OPT_SUCCESS else {
             throw Errors.GetOptionError
         }
-        let value: T = UnsafeMutablePointer<T>(resultP).memory
-        resultP.dealloc(bytesToAlloc)
-        resultP.destroy()
+        let value: T = UnsafeMutablePointer<T>(resultP).pointee
+        resultP.deallocateCapacity(bytesToAlloc)
+        resultP.deinitialize()
         return value
     }
     deinit {
