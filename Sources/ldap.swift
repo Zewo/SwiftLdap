@@ -13,21 +13,21 @@ public enum Errors:ErrorProtocol {
 public class Ldap {
     var ld: OpaquePointer? = nil
     public init(_ uri: String) throws {
-        var ld : OpaquePointer = nil
+        var ld : OpaquePointer? = nil
         let status = ldap_initialize(&ld, uri)
         if let error = ApiErrorCode(status: status) {
             throw Errors.InitializeError(code: error)
         }
         self.ld = ld
     }
-    public func setOption<T>(optionType: OptionType, value: T) throws {
+    public func setOption<T>(_ optionType: OptionType, value: T) throws {
         var value = value
         let status = ldap_set_option(ld!, optionType.rawValue, &value)
         guard status==LDAP_OPT_SUCCESS else {
             throw Errors.SetOptionError
         }
     }
-    public func getOption<T>(optionType: OptionType, bytesToAlloc: Int=1) throws -> T {
+    public func getOption<T>(_ optionType: OptionType, bytesToAlloc: Int=1) throws -> T {
         let resultP = UnsafeMutablePointer<Void>(allocatingCapacity: bytesToAlloc)
         let status = ldap_get_option(ld!, optionType.rawValue, resultP)
         guard status==LDAP_OPT_SUCCESS else {
